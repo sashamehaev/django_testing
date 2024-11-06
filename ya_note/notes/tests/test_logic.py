@@ -95,6 +95,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from notes.models import Note
+from notes.forms import WARNING
 
 User = get_user_model()
 
@@ -105,6 +106,12 @@ class TestLogic(TestCase):
     def setUpTestData(cls):
         cls.author = User.objects.create(username='Лев Толстой')
         cls.user = User.objects.create(username='Мимо Крокодил')
+        cls.note = Note.objects.create(
+            title='Заголовок',
+            text='Текст заметки',
+            slug='note-slug',
+            author=cls.author,
+        )
         cls.form_data = {
             'title': 'Новый заголовок',
             'text': 'Новый текст',
@@ -116,15 +123,25 @@ class TestLogic(TestCase):
         self.client.force_login(self.author)
         response = self.client.post(url, data=self.form_data)
         self.assertRedirects(response, reverse('notes:success'))
-        assert Note.objects.count() == 1
+        assert Note.objects.count() == 2
         new_note = Note.objects.get()
         assert new_note.title == self.form_data['title']
         assert new_note.text == self.form_data['text']
         assert new_note.slug == self.form_data['slug']
         assert new_note.author == self.author
 
-
-
+    def test_not_unique_slug(self):
+        url = reverse('notes:add')
+        self.form_data['slug'] = self.note.slug
+        self.client.force_login(self.author)
+        response = self.client.post(url, data=self.form_data)
+        self.assertFormError(
+            response,
+            'form',
+            'slug',
+            errors=(self.note.slug + WARNING)
+        )
+        assert Note.objects.count() == 1
 
 
 
