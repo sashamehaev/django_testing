@@ -104,7 +104,7 @@ class TestRoutes(TestCase):
             slug='note-slug',
             author=cls.author,
         )
-        cls.user = User.objects.create(username='Мимо Крокодил')
+        cls.author = User.objects.create(username='Мимо Крокодил')
 
     def test_home_availability_for_anonymous_user(self):
         url = reverse('notes:home')
