@@ -90,6 +90,8 @@ def test_other_user_cant_delete_note(not_author_client, slug_for_args):
 
 from http import HTTPStatus
 
+from pytils.translit import slugify
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -143,6 +145,16 @@ class TestLogic(TestCase):
         )
         assert Note.objects.count() == 1
 
+    def test_empty_slug(self):
+        url = reverse('notes:add')
+        self.form_data.pop('slug')
+        self.client.force_login(self.author)
+        response = self.client.post(url, data=self.form_data)
+        self.assertRedirects(response, reverse('notes:success'))
+        assert Note.objects.count() == 2
+        new_note = Note.objects.last()
+        expected_slug = slugify(self.form_data['title'])
+        assert new_note.slug == expected_slug
 
 
 
