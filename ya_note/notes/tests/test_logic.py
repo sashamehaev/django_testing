@@ -93,7 +93,7 @@ from http import HTTPStatus
 from pytils.translit import slugify
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import TestCase
 from django.urls import reverse
 
 from notes.models import Note
@@ -126,7 +126,7 @@ class TestLogic(TestCase):
         response = self.client.post(url, data=self.form_data)
         self.assertRedirects(response, reverse('notes:success'))
         assert Note.objects.count() == 2
-        new_note = Note.objects.get()
+        new_note = Note.objects.last()
         assert new_note.title == self.form_data['title']
         assert new_note.text == self.form_data['text']
         assert new_note.slug == self.form_data['slug']
@@ -156,80 +156,36 @@ class TestLogic(TestCase):
         expected_slug = slugify(self.form_data['title'])
         assert new_note.slug == expected_slug
 
+    def test_author_can_edit_note(self):
+        url = reverse('notes:edit', args=(self.note.slug,))
+        self.client.force_login(self.author)
+        response = self.client.post(url, self.form_data)
+        self.assertRedirects(response, reverse('notes:success'))
+        self.note.refresh_from_db()
+        assert self.note.title == self.form_data['title']
+        assert self.note.text == self.form_data['text']
+        assert self.note.slug == self.form_data['slug']
 
+    def test_other_user_cant_edit_note(self):
+        url = reverse('notes:edit', args=(self.note.slug,))
+        self.client.force_login(self.user)
+        response = self.client.post(url, self.form_data)
+        assert response.status_code == HTTPStatus.NOT_FOUND
+        note_from_db = Note.objects.get(id=self.note.id)
+        assert self.note.title == note_from_db.title
+        assert self.note.text == note_from_db.text
+        assert self.note.slug == note_from_db.slug
 
-    def test_anonymous_user_cant_create_comment(self):   
-        self.client.post(self.url, data=self.form_data)
-        comments_count = Comment.objects.count()
-        self.assertEqual(comments_count, 0)
+    def test_author_can_delete_note(self):
+        url = reverse('notes:delete', args=(self.note.slug,))
+        self.client.force_login(self.author)
+        response = self.client.post(url)
+        self.assertRedirects(response, reverse('notes:success'))
+        assert Note.objects.count() == 0
 
-    def test_user_can_create_comment(self):
-        response = self.auth_client.post(self.url, data=self.form_data)
-        self.assertRedirects(response, f'{self.url}#comments')
-        comments_count = Comment.objects.count()
-        self.assertEqual(comments_count, 1)
-        comment = Comment.objects.get()
-        self.assertEqual(comment.text, self.COMMENT_TEXT)
-        self.assertEqual(comment.news, self.news)
-        self.assertEqual(comment.author, self.user)
-
-    def test_user_cant_use_bad_words(self):
-        bad_words_data = {'text': f'Какой-то текст, {BAD_WORDS[0]}, еще текст'}
-        response = self.auth_client.post(self.url, data=bad_words_data)
-        self.assertFormError(
-            response,
-            form='form',
-            field='text',
-            errors=WARNING
-        )
-        comments_count = Comment.objects.count()
-        self.assertEqual(comments_count, 0)
-
-
-class TestCommentEditDelete(TestCase):
-    COMMENT_TEXT = 'Текст комментария'
-    NEW_COMMENT_TEXT = 'Обновлённый комментарий'
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.news = News.objects.create(title='Заголовок', text='Текст')
-        news_url = reverse('news:detail', args=(cls.news.id,))
-        cls.url_to_comments = news_url + '#comments'
-        cls.author = User.objects.create(username='Автор комментария')
-        cls.author_client = Client()
-        cls.author_client.force_login(cls.author)
-        cls.reader = User.objects.create(username='Читатель')
-        cls.reader_client = Client()
-        cls.reader_client.force_login(cls.reader)
-        cls.comment = Comment.objects.create(
-            news=cls.news,
-            author=cls.author,
-            text=cls.COMMENT_TEXT
-        )
-        cls.edit_url = reverse('news:edit', args=(cls.comment.id,))
-        cls.delete_url = reverse('news:delete', args=(cls.comment.id,))
-        cls.form_data = {'text': cls.NEW_COMMENT_TEXT}
-
-    def test_author_can_delete_comment(self):
-        response = self.author_client.delete(self.delete_url)
-        self.assertRedirects(response, self.url_to_comments)
-        comments_count = Comment.objects.count()
-        self.assertEqual(comments_count, 0)
-
-    def test_user_cant_delete_comment_of_another_user(self):
-        response = self.reader_client.delete(self.delete_url)
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        comments_count = Comment.objects.count()
-        self.assertEqual(comments_count, 1)
-
-    def test_author_can_edit_comment(self):
-        response = self.author_client.post(self.edit_url, data=self.form_data)
-        self.assertRedirects(response, self.url_to_comments)
-        self.comment.refresh_from_db()
-        self.assertEqual(self.comment.text, self.NEW_COMMENT_TEXT)
-
-    def test_user_cant_edit_comment_of_another_user(self):
-        response = self.reader_client.post(self.edit_url, data=self.form_data)
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.comment.refresh_from_db()
-        self.assertEqual(self.comment.text, self.COMMENT_TEXT)
+    def test_other_user_cant_delete_note(self):
+        url = reverse('notes:delete', args=(self.note.slug,))
+        self.client.force_login(self.user)
+        response = self.client.post(url)
+        assert response.status_code == HTTPStatus.NOT_FOUND
+        assert Note.objects.count() == 1
