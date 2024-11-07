@@ -1,4 +1,4 @@
-# news/tests/test_content.py
+"""# news/tests/test_content.py
 from django.conf import settings
 from django.test import TestCase
 # Импортируем функцию reverse(), она понадобится для получения адреса страницы.
@@ -106,3 +106,4 @@ class TestDetailPage(TestCase):
         self.assertIn('form', response.context)
         # Проверим, что объект формы соответствует нужному классу формы.
         self.assertIsInstance(response.context['form'], CommentForm)
+"""

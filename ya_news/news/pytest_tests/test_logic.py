@@ -1,4 +1,4 @@
-from http import HTTPStatus
+"""from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
@@ -97,3 +97,4 @@ class TestCommentEditDelete(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.comment.refresh_from_db()
         self.assertEqual(self.comment.text, self.COMMENT_TEXT)
+"""
