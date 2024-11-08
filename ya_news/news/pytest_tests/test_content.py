@@ -59,16 +59,7 @@ from news.models import News
 
 
 @pytest.mark.django_db
-def test_news_count(client):
-    today = datetime.today()
-    all_news = [
-        News(
-            title=f'Новость {index}',
-            text='Просто текст.',
-            date=today - timedelta(days=index)
-        )
-        for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
-    ]
+def test_news_count(client, all_news):
     News.objects.bulk_create(all_news)
     url = reverse('news:home')
     response = client.get(url)
@@ -78,7 +69,18 @@ def test_news_count(client):
     assert news_count == settings.NEWS_COUNT_ON_HOME_PAGE
 
 
-
+@pytest.mark.django_db
+def test_news_order(client, all_news):
+    News.objects.bulk_create(all_news)
+    url = reverse('news:home')
+    response = client.get(url)
+    object_list = response.context['object_list']
+    # Получаем даты новостей в том порядке, как они выведены на странице.
+    all_dates = [news.date for news in object_list]
+    # Сортируем полученный список по убыванию.
+    sorted_dates = sorted(all_dates, reverse=True)
+    # Проверяем, что исходный список был отсортирован правильно.
+    assert all_dates == sorted_dates
 
 
 
