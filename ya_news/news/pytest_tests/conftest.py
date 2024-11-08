@@ -2,6 +2,9 @@ import pytest
 
 # Импортируем класс клиента.
 from django.test.client import Client
+from django.conf import settings
+
+from datetime import datetime, timedelta
 
 # Импортируем модель заметки, чтобы создать экземпляр.
 from news.models import News, Comment
@@ -67,3 +70,18 @@ def form_data():
         'text': 'Новый текст',
         'slug': 'new-slug'
     }
+
+
+@pytest.fixture
+def all_news():
+    today = datetime.today()
+    all_news = [
+        News(
+            title=f'Новость {index}',
+            text='Просто текст.',
+            date=today - timedelta(days=index)
+        )
+        for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
+    ]
+    News.objects.bulk_create(all_news)
+    return all_news
