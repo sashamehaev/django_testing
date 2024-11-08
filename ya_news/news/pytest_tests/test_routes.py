@@ -87,7 +87,6 @@ from pytest_django.asserts import assertRedirects
 from django.urls import reverse
 
 
-# Испаравить
 @pytest.mark.django_db
 def test_home_page(client):
     url = reverse('news:home')
@@ -100,6 +99,25 @@ def test_detail_page(client, news):
     url = reverse('news:detail', kwargs={'pk': news.id})
     response = client.get(url)  # Выполняем запрос.
     assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.parametrize(
+    'user, status',
+    (
+        (pytest.lazy_fixture('author_client'), HTTPStatus.OK),
+        (pytest.lazy_fixture('not_author_client'), HTTPStatus.NOT_FOUND)
+    )
+)
+@pytest.mark.parametrize(
+    'name',
+    ('news:edit', 'news:delete'),
+)
+def test_availability_for_comment_edit_and_delete(
+    user, status, name, comment
+):
+    url = reverse(name, kwargs={'pk': comment.id})
+    response = user.get(url)
+    assert response.status_code == status
 
 
 """from http import HTTPStatus

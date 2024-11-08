@@ -4,7 +4,7 @@ import pytest
 from django.test.client import Client
 
 # Импортируем модель заметки, чтобы создать экземпляр.
-from news.models import News
+from news.models import News, Comment
 
 
 @pytest.fixture
@@ -40,6 +40,16 @@ def news():
         text='Текст'
     )
     return news
+
+
+@pytest.fixture
+def comment(news, author):
+    comment = Comment.objects.create(
+        news=news,
+        author=author,
+        text='Текст'
+    )
+    return comment
 
 
 @pytest.fixture
