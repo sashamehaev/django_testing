@@ -120,6 +120,16 @@ def test_availability_for_comment_edit_and_delete(
     assert response.status_code == status
 
 
+@pytest.mark.parametrize(
+    'name',
+    ('users:login', 'users:logout', 'users:signup'),
+)
+def test_pages_availability(name, client):
+    url = reverse(name)
+    response = client.get(url)
+    assert response.status_code == HTTPStatus.OK
+
+
 """from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
