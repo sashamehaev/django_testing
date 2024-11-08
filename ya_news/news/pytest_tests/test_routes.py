@@ -87,14 +87,17 @@ from pytest_django.asserts import assertRedirects
 from django.urls import reverse
 
 
-def test_home_availability_for_anonymous_user(admin_client):
+# Испаравить
+@pytest.mark.django_db
+def test_home_page(client):
     url = reverse('news:home')
-    response = admin_client.get(url)
+    response = client.get(url)
     assert response.status_code == HTTPStatus.OK
 
 
-def test_pages_availability_for_anonymous_user(client, name):
-    url = reverse(name)  # Получаем ссылку на нужный адрес.
+@pytest.mark.django_db
+def test_detail_page(client, news):
+    url = reverse('news:detail', kwargs={'pk': news.id})
     response = client.get(url)  # Выполняем запрос.
     assert response.status_code == HTTPStatus.OK
 
