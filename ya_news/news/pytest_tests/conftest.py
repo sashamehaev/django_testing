@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 
-from django.test.client import Client
+import pytest
 from django.conf import settings
+from django.test.client import Client
 from django.utils import timezone
 from django.urls import reverse
-import pytest
 
 from news.models import News, Comment
 
@@ -95,3 +95,8 @@ def delete_url(comment):
 @pytest.fixture
 def edit_url(comment):
     return reverse('news:edit', kwargs={'pk': comment.id})
+
+
+@pytest.fixture
+def home_url():
+    return reverse('news:home')

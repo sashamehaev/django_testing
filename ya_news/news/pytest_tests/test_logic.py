@@ -1,9 +1,9 @@
 from http import HTTPStatus
 
-from django.test import Client
-from django.conf import settings
-from pytest_django.asserts import assertRedirects, assertFormError
 import pytest
+from django.conf import settings
+from django.test import Client
+from pytest_django.asserts import assertRedirects, assertFormError
 
 from news.forms import BAD_WORDS, WARNING
 from news.models import Comment
