@@ -1,18 +1,15 @@
-import pytest
+from datetime import datetime, timedelta
 
-# Импортируем класс клиента.
+import pytest
 from django.test.client import Client
 from django.conf import settings
 from django.utils import timezone
+from django.urls import reverse
 
-from datetime import datetime, timedelta
-
-# Импортируем модель заметки, чтобы создать экземпляр.
 from news.models import News, Comment
 
 
 @pytest.fixture
-# Используем встроенную фикстуру для модели пользователей django_user_model.
 def author(django_user_model):
     return django_user_model.objects.create(username='Автор')
 
@@ -23,23 +20,22 @@ def not_author(django_user_model):
 
 
 @pytest.fixture
-def author_client(author):  # Вызываем фикстуру автора.
-    # Создаём новый экземпляр клиента, чтобы не менять глобальный.
+def author_client(author):
     client = Client()
-    client.force_login(author)  # Логиним автора в клиенте.
+    client.force_login(author)
     return client
 
 
 @pytest.fixture
 def not_author_client(not_author):
     client = Client()
-    client.force_login(not_author)  # Логиним обычного пользователя в клиенте.
+    client.force_login(not_author)
     return client
 
 
 @pytest.fixture
 def news():
-    news = News.objects.create(  # Создаём объект заметки.
+    news = News.objects.create(
         title='Заголовок',
         text='Текст'
     )
@@ -54,14 +50,6 @@ def comment(news, author):
         text='Комментарий'
     )
     return comment
-
-
-@pytest.fixture
-# Фикстура запрашивает другую фикстуру создания заметки.
-def slug_for_args(news):
-    # И возвращает кортеж, который содержит slug заметки.
-    # На то, что это кортеж, указывает запятая в конце выражения.
-    return (news.slug,)
 
 
 @pytest.fixture
@@ -96,3 +84,23 @@ def all_comments(author, news):
         comment.created = now + timedelta(days=index)
         comment.save()
     return all_comments
+
+
+@pytest.fixture
+def detail_url(news):
+    return reverse('news:detail', kwargs={'pk': news.id})
+
+
+@pytest.fixture
+def url_to_comments(detail_url):
+    return detail_url + '#comments'
+
+
+@pytest.fixture
+def delete_url(news):
+    return reverse('news:delete', kwargs={'pk': news.id})
+
+
+@pytest.fixture
+def edit_url(news):
+    return reverse('news:edit', kwargs={'pk': news.id})
