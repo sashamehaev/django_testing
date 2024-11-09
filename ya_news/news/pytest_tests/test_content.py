@@ -83,7 +83,23 @@ def test_news_order(client, all_news):
     assert all_dates == sorted_dates
 
 
-
+@pytest.mark.django_db
+def test_comments_order(client, news, all_comments):
+    url = reverse('news:detail', kwargs={'pk': news.id})
+    response = client.get(url)
+    # Проверяем, что объект новости находится в словаре контекста
+    # под ожидаемым именем - названием модели.
+    assert 'news' in response.context
+    # Получаем объект новости.
+    news = response.context['news']
+    # Получаем все комментарии к новости.
+    all_comments = news.comment_set.all()
+    # Собираем временные метки всех комментариев.
+    all_timestamps = [comment.created for comment in all_comments]
+    # Сортируем временные метки, менять порядок сортировки не надо.
+    sorted_timestamps = sorted(all_timestamps)
+    # Проверяем, что временные метки отсортированы правильно.
+    assert all_timestamps == sorted_timestamps
 
 
 

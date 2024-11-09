@@ -3,6 +3,7 @@ import pytest
 # Импортируем класс клиента.
 from django.test.client import Client
 from django.conf import settings
+from django.utils import timezone
 
 from datetime import datetime, timedelta
 
@@ -85,3 +86,15 @@ def all_news():
     ]
     News.objects.bulk_create(all_news)
     return all_news
+
+
+@pytest.fixture
+def all_comments(author, news):
+    now = timezone.now()
+    for index in range(10):
+        comment = Comment.objects.create(
+            news=news, author=author, text=f'Tекст {index}',
+        )
+        comment.created = now + timedelta(days=index)
+        comment.save()
+    return all_comments
