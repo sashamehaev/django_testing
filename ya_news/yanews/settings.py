@@ -81,3 +81,4 @@ LOGIN_REDIRECT_URL = reverse_lazy('news:home')
 
 NEWS_COUNT_ON_HOME_PAGE = 10
 COMMENT_TEXT = 'Комментарий'
+NEW_COMMENT_TEXT = 'Новый комментарий'

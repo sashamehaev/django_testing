@@ -118,11 +118,43 @@ def test_user_can_create_comment(author, form_data, news):
     comments_count = Comment.objects.count()
     assert comments_count == 1
     comment = Comment.objects.get()
-    assert comment.text == settings.COMMENT_TEXT
+    assert comment.text == settings.NEW_COMMENT_TEXT
     assert comment.news == news
     assert comment.author == author
 
 
+def test_user_cant_use_bad_words(author_client, news):
+    bad_words_data = {'text': f'Какой-то текст, {BAD_WORDS[0]}, еще текст'}
+    url = reverse('news:detail', kwargs={'pk': news.id})
+    response = author_client.post(url, data=bad_words_data)
+    assertFormError(
+        response,
+        form='form',
+        field='text',
+        errors=WARNING
+    )
+    comments_count = Comment.objects.count()
+    assert comments_count == 0
+
+
+def test_author_can_delete_comment(author_client, news, comment):
+    delete_url = reverse('news:delete', kwargs={'pk': news.id})
+    detail_url = reverse('news:detail', kwargs={'pk': news.id})
+    url_to_comments = detail_url + '#comments'
+    response = author_client.delete(delete_url)
+    assertRedirects(response, url_to_comments)
+    comments_count = Comment.objects.count()
+    assert comments_count == 0
+
+
+def test_author_can_edit_comment(author_client, form_data, news, comment):
+    edit_url = reverse('news:edit', kwargs={'pk': news.id})
+    detail_url = reverse('news:detail', kwargs={'pk': news.id})
+    url_to_comments = detail_url + '#comments'
+    response = author_client.post(edit_url, data=form_data)
+    assertRedirects(response, url_to_comments)
+    comment.refresh_from_db()
+    assert comment.text == settings.NEW_COMMENT_TEXT
 
 """from http import HTTPStatus
 

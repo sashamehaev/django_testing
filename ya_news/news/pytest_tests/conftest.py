@@ -51,7 +51,7 @@ def comment(news, author):
     comment = Comment.objects.create(
         news=news,
         author=author,
-        text='Текст'
+        text='Комментарий'
     )
     return comment
 
@@ -67,7 +67,7 @@ def slug_for_args(news):
 @pytest.fixture
 def form_data():
     return {
-        'text': 'Комментарий'
+        'text': 'Новый комментарий'
     }
 
 
