@@ -8,24 +8,25 @@ import pytest
 from news.forms import BAD_WORDS, WARNING
 from news.models import Comment
 
+NEW_COMMENT = {'text': 'Новый комментарий'}
+
 
 @pytest.mark.django_db
-def test_anonymous_user_cant_create_comment(client, form_data, detail_url):
-    client.post(detail_url, data=form_data)
+def test_anonymous_user_cant_create_comment(client, detail_url):
+    client.post(detail_url, data=NEW_COMMENT)
     comments_count = Comment.objects.count()
     assert comments_count == 0
 
 
 def test_user_can_create_comment(
     author,
-    form_data,
     news,
     detail_url,
     url_to_comments
 ):
     client = Client()
     client.force_login(author)
-    response = client.post(detail_url, data=form_data)
+    response = client.post(detail_url, data=NEW_COMMENT)
     assertRedirects(response, url_to_comments)
     comments_count = Comment.objects.count()
     assert comments_count == 1
@@ -62,12 +63,11 @@ def test_author_can_delete_comment(
 
 def test_author_can_edit_comment(
     author_client,
-    form_data,
     comment,
     url_to_comments,
     edit_url
 ):
-    response = author_client.post(edit_url, data=form_data)
+    response = author_client.post(edit_url, data=NEW_COMMENT)
     assertRedirects(response, url_to_comments)
     comment.refresh_from_db()
     assert comment.text == settings.NEW_COMMENT_TEXT
@@ -86,11 +86,10 @@ def test_user_cant_delete_comment_of_another_user(
 
 def test_user_cant_edit_comment_of_another_user(
     not_author_client,
-    form_data,
     comment,
     edit_url
 ):
-    response = not_author_client.post(edit_url, data=form_data)
+    response = not_author_client.post(edit_url, data=NEW_COMMENT)
     assert response.status_code == HTTPStatus.NOT_FOUND
     comment.refresh_from_db()
     assert comment.text == settings.COMMENT_TEXT

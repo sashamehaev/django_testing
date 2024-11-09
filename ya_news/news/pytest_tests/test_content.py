@@ -3,12 +3,10 @@ from django.urls import reverse
 from django.conf import settings
 
 from news.forms import CommentForm
-from news.models import News
 
 
 @pytest.mark.django_db
 def test_news_count(client, all_news):
-    News.objects.bulk_create(all_news)
     url = reverse('news:home')
     response = client.get(url)
     object_list = response.context['object_list']
@@ -18,7 +16,6 @@ def test_news_count(client, all_news):
 
 @pytest.mark.django_db
 def test_news_order(client, all_news):
-    News.objects.bulk_create(all_news)
     url = reverse('news:home')
     response = client.get(url)
     object_list = response.context['object_list']
