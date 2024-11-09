@@ -1,52 +1,57 @@
 from http import HTTPStatus
 
-import pytest
 from django.conf import settings
 from django.test import Client
 from pytest_django.asserts import assertRedirects, assertFormError
+import pytest
 
 from news.forms import BAD_WORDS, WARNING
 from news.models import Comment
 
+pytestmark = pytest.mark.django_db
+
 NEW_COMMENT = {'text': 'Новый комментарий'}
 
 
-@pytest.mark.django_db
 def test_anonymous_user_cant_create_comment(client, detail_url):
-    client.post(detail_url, data=NEW_COMMENT)
     comments_count = Comment.objects.count()
-    assert comments_count == 0
+    client.post(detail_url, data=NEW_COMMENT)
+    comments_count_after_request = Comment.objects.count()
+    assert comments_count == comments_count_after_request
 
 
 def test_user_can_create_comment(
+    author_client,
     author,
     news,
     detail_url,
     url_to_comments
 ):
-    client = Client()
-    client.force_login(author)
-    response = client.post(detail_url, data=NEW_COMMENT)
-    assertRedirects(response, url_to_comments)
+    comments_count = Comment.objects.all().delete()
     comments_count = Comment.objects.count()
-    assert comments_count == 1
+    response = author_client.post(detail_url, data=NEW_COMMENT)
+    comments_count_after_request = Comment.objects.count()
+    assert comments_count_after_request > comments_count
+    assertRedirects(response, url_to_comments)
     comment = Comment.objects.get()
-    assert comment.text == settings.NEW_COMMENT_TEXT
+    assert comment.text == NEW_COMMENT['text']
     assert comment.news == news
     assert comment.author == author
 
 
 def test_user_cant_use_bad_words(author_client, detail_url):
     bad_words_data = {'text': f'Какой-то текст, {BAD_WORDS[0]}, еще текст'}
+    comments_count = Comment.objects.all().delete()
+    comments_count = Comment.objects.count()
     response = author_client.post(detail_url, data=bad_words_data)
+    comments_count_after_request = Comment.objects.count()
+    assert comments_count == comments_count_after_request
     assertFormError(
         response,
         form='form',
         field='text',
         errors=WARNING
     )
-    comments_count = Comment.objects.count()
-    assert comments_count == 0
 
 
 def test_author_can_delete_comment(
@@ -69,8 +74,8 @@ def test_author_can_edit_comment(
 ):
     response = author_client.post(edit_url, data=NEW_COMMENT)
     assertRedirects(response, url_to_comments)
-    comment.refresh_from_db()
-    assert comment.text == settings.NEW_COMMENT_TEXT
+    comment = Comment.objects.get(pk=comment.id)
+    assert comment.text == NEW_COMMENT['text']
 
 
 def test_user_cant_delete_comment_of_another_user(
@@ -91,5 +96,7 @@ def test_user_cant_edit_comment_of_another_user(
 ):
     response = not_author_client.post(edit_url, data=NEW_COMMENT)
     assert response.status_code == HTTPStatus.NOT_FOUND
-    comment.refresh_from_db()
-    assert comment.text == settings.COMMENT_TEXT
+    comment_from_db = Comment.objects.get(pk=comment.id)
+    assert comment.text == comment_from_db.text
+    assert comment.author == comment_from_db.author
+    assert comment.news == comment_from_db.news
