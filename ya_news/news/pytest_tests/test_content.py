@@ -52,8 +52,6 @@ import pytest
 from django.urls import reverse
 from django.conf import settings
 
-from datetime import datetime, timedelta
-
 from news.forms import CommentForm
 from news.models import News
 
