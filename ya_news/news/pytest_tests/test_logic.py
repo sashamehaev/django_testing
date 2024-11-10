@@ -1,9 +1,9 @@
 import pytest
 from pytest_django.asserts import assertFormError, assertRedirects
 
-from news.pytest_tests.constants import STATUS_404
 from news.forms import BAD_WORDS, WARNING
 from news.models import Comment
+from news.pytest_tests.constants import STATUS_404
 
 pytestmark = pytest.mark.django_db
 
@@ -67,17 +67,16 @@ def test_author_can_delete_comment(
 def test_author_can_edit_comment(
     author_client,
     comment,
-    author,
-    news,
     url_to_comments,
     edit_url
 ):
     response = author_client.post(edit_url, data=NEW_COMMENT)
     assertRedirects(response, url_to_comments)
-    comment = Comment.objects.get(pk=comment.id)
-    assert comment.text == NEW_COMMENT['text']
-    assert comment.news == news
-    assert comment.author == author
+    comment_from_db = Comment.objects.get(pk=comment.id)
+    comment.text = NEW_COMMENT['text']
+    assert comment_from_db.text == comment.text
+    assert comment_from_db.news == comment.news
+    assert comment_from_db.author == comment.author
 
 
 def test_user_cant_delete_comment_of_another_user(
