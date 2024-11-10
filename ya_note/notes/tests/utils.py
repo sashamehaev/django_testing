@@ -1,8 +1,13 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
 from notes.models import Note
+
+STATUS_404 = HTTPStatus.NOT_FOUND
+STATUS_200 = HTTPStatus.OK
 
 User = get_user_model()
 
@@ -29,5 +34,9 @@ class TestFixture(TestCase):
         cls.notes_delete_url = reverse('notes:delete', args=(cls.note.slug,))
         cls.notes_success_url = reverse('notes:success')
         cls.notes_detail_url = reverse('notes:detail', args=(cls.note.slug,))
+        cls.notes_home_url = reverse('notes:home')
+        cls.login_url = reverse('users:login')
+        cls.logout_url = reverse('users:logout')
+        cls.signup_url = reverse('users:signup')
 
         return super().setUpTestData()

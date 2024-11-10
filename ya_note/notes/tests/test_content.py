@@ -1,9 +1,5 @@
-from django.contrib.auth import get_user_model
-
 from notes.forms import NoteForm
 from notes.tests.utils import TestFixture
-
-User = get_user_model()
 
 
 class TestContent(TestFixture):

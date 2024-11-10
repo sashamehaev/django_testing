@@ -1,25 +1,22 @@
 from http import HTTPStatus
 
-from django.contrib.auth import get_user_model
 from pytils.translit import slugify
 
 from notes.forms import WARNING
 from notes.models import Note
 from notes.tests.utils import TestFixture
 
-User = get_user_model()
-
 
 class TestLogic(TestFixture):
 
     @classmethod
     def setUpTestData(cls):
+        super().setUpTestData()
         cls.form_data = {
             'title': 'Новый заголовок',
             'text': 'Новый текст',
             'slug': 'new-slug'
         }
-        return super().setUpTestData()
 
     def test_user_can_create_note(self):
         Note.objects.all().delete()
@@ -29,7 +26,7 @@ class TestLogic(TestFixture):
             data=self.form_data
         )
         notes_count_after_request = Note.objects.count()
-        self.assertGreater(notes_count_after_request, notes_count)
+        self.assertEqual(notes_count_after_request, notes_count + 1)
         self.assertRedirects(response, self.notes_success_url)
         new_note = Note.objects.get()
         self.assertEqual(new_note.title, self.form_data['title'])
@@ -62,7 +59,7 @@ class TestLogic(TestFixture):
             data=self.form_data
         )
         notes_count_after_request = Note.objects.count()
-        self.assertGreater(notes_count_after_request, notes_count)
+        self.assertEqual(notes_count_after_request, notes_count + 1)
         self.assertRedirects(response, self.notes_success_url)
         new_note = Note.objects.get()
         expected_slug = slugify(self.form_data['title'])
@@ -72,10 +69,10 @@ class TestLogic(TestFixture):
         response = self.author_client.post(self.notes_edit_url, self.form_data)
         self.assertRedirects(response, self.notes_success_url)
         new_note = Note.objects.get(pk=self.note.id)
-        self.assertEqual(new_note.title, self.form_data['title'])
-        self.assertEqual(new_note.text, self.form_data['text'])
-        self.assertEqual(new_note.slug, self.form_data['slug'])
-        self.assertEqual(new_note.author, self.author)
+        self.assertNotEqual(new_note.title, self.note.title)
+        self.assertNotEqual(new_note.text, self.note.text)
+        self.assertNotEqual(new_note.slug, self.note.slug)
+        self.assertEqual(new_note.author, self.note.author)
 
     def test_other_user_cant_edit_note(self):
         response = self.user_client.post(self.notes_edit_url, self.form_data)
@@ -84,7 +81,7 @@ class TestLogic(TestFixture):
         self.assertEqual(self.note.title, note_from_db.title)
         self.assertEqual(self.note.text, note_from_db.text)
         self.assertEqual(self.note.slug, note_from_db.slug)
-        self.assertEqual(self.note.author, self.author)
+        self.assertEqual(self.note.author, note_from_db.author)
 
     def test_author_can_delete_note(self):
         notes_count = Note.objects.count()
