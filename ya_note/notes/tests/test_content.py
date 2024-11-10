@@ -25,8 +25,7 @@ class TestContent(TestFixture):
             self.notes_edit_url
         )
         for url in pages_contains:
-            with self.subTest():
-                self.client.force_login(self.author)
-                response = self.client.get(url)
+            with self.subTest(url=url):
+                response = self.author_client.get(url)
                 self.assertIn('form', response.context)
                 self.assertIsInstance(response.context['form'], NoteForm)

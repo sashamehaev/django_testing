@@ -20,7 +20,6 @@ class TestLogic(TestFixture):
             'text': 'Новый текст',
             'slug': 'new-slug'
         }
-        cls.notes_success_url = reverse('notes:success')
         return super().setUpTestData()
 
     def test_user_can_create_note(self):

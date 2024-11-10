@@ -27,5 +27,7 @@ class TestFixture(TestCase):
         cls.notes_edit_url = reverse('notes:edit', args=(cls.note.slug,))
         cls.notes_add_url = reverse('notes:add')
         cls.notes_delete_url = reverse('notes:delete', args=(cls.note.slug,))
+        cls.notes_success_url = reverse('notes:success')
+        cls.notes_detail_url = reverse('notes:detail', args=(cls.note.slug,))
 
         return super().setUpTestData()
