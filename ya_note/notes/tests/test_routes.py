@@ -1,5 +1,3 @@
-from django.urls import reverse
-
 from notes.tests.utils import TestFixture, STATUS_404, STATUS_200
 
 
