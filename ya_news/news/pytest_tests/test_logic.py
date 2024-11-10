@@ -1,8 +1,7 @@
-from http import HTTPStatus
-
-from pytest_django.asserts import assertRedirects, assertFormError
 import pytest
+from pytest_django.asserts import assertFormError, assertRedirects
 
+from news.pytest_tests.constants import STATUS_404
 from news.forms import BAD_WORDS, WARNING
 from news.models import Comment
 
@@ -58,15 +57,18 @@ def test_author_can_delete_comment(
     url_to_comments,
     delete_url
 ):
-    response = author_client.delete(delete_url)
-    assertRedirects(response, url_to_comments)
     comments_count = Comment.objects.count()
-    assert comments_count == 0
+    response = author_client.delete(delete_url)
+    comments_count_after_request = Comment.objects.count()
+    assert comments_count > comments_count_after_request
+    assertRedirects(response, url_to_comments)
 
 
 def test_author_can_edit_comment(
     author_client,
     comment,
+    author,
+    news,
     url_to_comments,
     edit_url
 ):
@@ -74,6 +76,8 @@ def test_author_can_edit_comment(
     assertRedirects(response, url_to_comments)
     comment = Comment.objects.get(pk=comment.id)
     assert comment.text == NEW_COMMENT['text']
+    assert comment.news == news
+    assert comment.author == author
 
 
 def test_user_cant_delete_comment_of_another_user(
@@ -81,10 +85,11 @@ def test_user_cant_delete_comment_of_another_user(
     comment,
     delete_url
 ):
-    response = not_author_client.delete(delete_url)
-    assert response.status_code == HTTPStatus.NOT_FOUND
     comments_count = Comment.objects.count()
-    assert comments_count == 1
+    response = not_author_client.delete(delete_url)
+    comments_count_after_request = Comment.objects.count()
+    assert comments_count == comments_count_after_request
+    assert response.status_code == STATUS_404
 
 
 def test_user_cant_edit_comment_of_another_user(
@@ -93,7 +98,7 @@ def test_user_cant_edit_comment_of_another_user(
     edit_url
 ):
     response = not_author_client.post(edit_url, data=NEW_COMMENT)
-    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.status_code == STATUS_404
     comment_from_db = Comment.objects.get(pk=comment.id)
     assert comment.text == comment_from_db.text
     assert comment.author == comment_from_db.author

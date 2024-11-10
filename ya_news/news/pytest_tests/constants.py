@@ -1,0 +1,5 @@
+from http import HTTPStatus
+
+STATUS_200 = HTTPStatus.OK
+STATUS_404 = HTTPStatus.NOT_FOUND
+STATUS_302 = HTTPStatus.FOUND
